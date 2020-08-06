@@ -10,7 +10,6 @@ class GradientDescent:
                  learning_rate=0.001,
                  max_iterations=1000,
                  track_cost=False,
-                 track_cost_interval=None,
                  penalty='l2',
                  alpha=1.0):
         # validate parameters
@@ -23,23 +22,20 @@ class GradientDescent:
         self.learning_rate = learning_rate
         self.max_iterations = max_iterations
         self.track_cost = track_cost
-        self.track_cost_interval = track_cost_interval
         self.penalty = penalty
         self.alpha = alpha
         self.mode = mode
         self.utils = lin_utils if mode == 'linear' else log_utils
-        self.cost_history = []
+        self.cost_history = None
         self.last_cost = math.inf
         self.last_cost_improvement = math.nan
-
-        if track_cost_interval is None:
-            self.track_cost_interval = int(max_iterations / 100)
 
     def find_theta(self, x, y):
         y = np.array(y).reshape(len(y), 1)
         n, m = x.shape
         theta = np.zeros((m, 1))
         x_t = x.T
+        self.cost_history = []
 
         self.last_cost = math.inf
         for i in range(0, self.max_iterations):
@@ -51,17 +47,17 @@ class GradientDescent:
             cost_improvement = abs(self.last_cost - cost)
 
             if cost_improvement < 1e-7:
-                print(F"Successful convergence at step #{i}")
+                #print(F"Successful convergence at step #{i}")
                 break
             elif math.isnan(cost):
-                print(F"Early Convergence step #{i} due broken math. "
-                      F"Last cost: {self.last_cost}"
-                      F"Last cost improvement: {self.last_cost_improvement}")
+                #print(F"Early Convergence step #{i} due broken math. "
+                #      F"Last cost: {self.last_cost}"
+                #      F"Last cost improvement: {self.last_cost_improvement}")
                 break
 
             self.last_cost = cost
             self.last_cost_improvement = cost_improvement
-            if self.track_cost and i % self.track_cost_interval == 0:
+            if self.track_cost:
                 self.cost_history.append(self.last_cost)
 
         return theta
@@ -78,7 +74,7 @@ class GradientDescent:
         elif self.penalty == 'l2':
             result = theta.copy()
             result[0, 0] = 0  # don't penalize bias
-            return self.alpha / n * result
+            return self.alpha * result
 
         else:
             return np.zeros((m, 1))
@@ -87,6 +83,6 @@ class GradientDescent:
         if not self.track_cost:
             return
 
-        x = np.linspace(0, self.max_iterations, len(self.cost_history))
+        x = range(len(self.cost_history))
         y = self.cost_history
         return x, y
